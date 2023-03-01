@@ -56,6 +56,21 @@ CASE WHEN pos = 'OF' THEN 'Outfield'
 FROM fielding
 GROUP BY position;
 
+SELECT 
+CASE WHEN pos = 'OF' THEN 'Outfield'
+	WHEN pos = '2B' OR pos = '1B' OR pos = '3B' OR pos = 'SS' THEN 'Infield'
+	ELSE 'Battery' END AS position,
+	COUNT(po) AS total_putout
+FROM fielding
+GROUP BY position;
+
+SELECT COUNT(po) AS total_putout
+FROM fielding
+WHERE pos = '1B' 
+OR pos = '2B' 
+OR pos = '3B' 
+OR pos = 'SS';
+
 -- Answer: "Battery" 56195 "Infield" 52186 "Outfield" 28434
    
 -- 5. Find the average number of strikeouts per game by decade since 1920. Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?

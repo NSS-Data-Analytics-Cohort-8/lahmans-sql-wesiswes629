@@ -7,13 +7,22 @@ FROM teams;
 
 -- 2. Find the name and height of the shortest player in the database. How many games did he play in? What is the name of the team for which he played?
 
-SELECT playerID, namegiven, height
-FROM people
+SELECT p.namegiven, p.height, t.name,
+	 COUNT(G_all) AS total_games
+FROM people AS p
+INNER JOIN appearances AS a
+USING (playerID)
+LEFT JOIN teams AS t
+ON a.teamid = t.teamid AND a.yearid = t.yearid
 WHERE height IN (
-SELECT MIN(height)
-FROM people);
-   
--- ANSWER: Edward Carl was 43 inches tall.
+	SELECT MIN(height)
+	FROM people)
+GROUP BY p.namegiven, p.height, t.name;
+
+
+	 
+-- ANSWER: Edward Carl was 43 inches tall. He played 1 game for the St Louis Browns.
+
 
 -- 3. Find all players in the database who played at Vanderbilt University. Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. Which Vanderbilt player earned the most money in the majors?
 	

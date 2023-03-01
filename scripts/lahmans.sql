@@ -26,15 +26,22 @@ GROUP BY p.namegiven, p.height, t.name;
 
 -- 3. Find all players in the database who played at Vanderbilt University. Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. Which Vanderbilt player earned the most money in the majors?
 
-SELECT playerID
-FROM collegeplaying
-WHERE schoolID IN 
-	(SELECT schoolID
-	FROM schools
-	WHERE schoolname LIKE 'Vanderbilt%');
-	
+			
+SELECT p.namefirst, p.namelast, SUM(s.salary) :: NUMERIC :: MONEY AS total_salary
+FROM people AS p
+LEFT JOIN salaries AS s
+USING (playerID)
+WHERE playerID IN (
+	SELECT playerID
+	FROM collegeplaying
+		WHERE schoolID IN 
+			(SELECT schoolID
+			FROM schools
+			WHERE schoolname LIKE 'Vanderbilt%'))
+GROUP BY p.namefirst, p.namelast
+ORDER BY total_salary DESC;
 
-	
+-- Answer: There are 24 players from 'Vandy', but only 15 made it to the Majors. David Price has the highest total salary with $81,851,296.00.
 
 -- 4. Using the fielding table, group players into three groups based on their position: label players with position OF as "Outfield", those with position "SS", "1B", "2B", and "3B" as "Infield", and those with position "P" or "C" as "Battery". Determine the number of putouts made by each of these three groups in 2016.
    

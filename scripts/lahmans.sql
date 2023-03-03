@@ -64,17 +64,38 @@ CASE WHEN pos = 'OF' THEN 'Outfield'
 FROM fielding
 GROUP BY position;
 
-SELECT COUNT(po) AS total_putout
-FROM fielding
-WHERE pos = '1B' 
-OR pos = '2B' 
-OR pos = '3B' 
-OR pos = 'SS';
-
 -- Answer: "Battery" 56195 "Infield" 52186 "Outfield" 28434
    
 -- 5. Find the average number of strikeouts per game by decade since 1920. Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?
-   
+
+
+SELECT yearID, SUM(so) AS so_year, SUM(hr) AS hr_year
+FROM batting AS b
+GROUP BY yearID
+ORDER BY yearID DESC;
+
+SELECT yearID, (SUM(g)/2) AS games_year
+FROM teams AS t
+GROUP BY yearID
+ORDER BY yearID DESC;
+
+WITH batting AS (
+SELECT yearID, (SUM(so) :: NUMERIC) AS so_year, (SUM(hr) :: NUMERIC) AS hr_year
+FROM batting AS b
+GROUP BY yearID),
+	games AS (
+SELECT yearID, ((SUM(g)/2) :: NUMERIC) AS games_year
+FROM teams AS t
+GROUP BY yearID)
+SELECT g.yearID, ROUND((so_year/games_year),2) AS so_per_game,
+		(hr_year/games_year) AS hr_per_game
+FROM games AS g
+INNER JOIN batting AS b
+USING (yearID)
+WHERE yearID > 1920
+ORDER BY yearID DESC;
+
+
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 	

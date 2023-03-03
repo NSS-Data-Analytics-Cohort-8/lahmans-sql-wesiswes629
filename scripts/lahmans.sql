@@ -88,18 +88,41 @@ ORDER BY decade DESC;
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 
-SELECT playerID, sb, cs, (sb+cs) AS stolen_attempts
-FROM batting
-WHERE yearID = 2016
-AND (sb+cs) > 19;
+-- SELECT playerID, sb, cs, (sb+cs) AS stolen_attempts
+-- FROM batting
+-- WHERE yearID = 2016
+-- AND (sb+cs) > 19;
 
-SELECT playerID, SUM(sb), SUM(cs), (SUM(sb)+SUM(cs)) AS stolen_attempts
+-- SELECT playerID, SUM(sb), SUM(cs), (SUM(sb)+SUM(cs)) AS stolen_attempts,
+-- FROM batting
+-- WHERE yearID = 2016
+-- GROUP BY playerID
+-- 	HAVING (SUM(sb)+SUM(cs)) > 19
+-- ORDER BY stolen_attempts DESC;
+
+-- SELECT playerID, SUM(sb) AS total_stolen, SUM(cs) AS total_caught, (SUM(sb)+SUM(cs)) AS total_attempts,
+-- 	ROUND(((SUM(sb)::NUMERIC)/((SUM(sb)+SUM(cs))::NUMERIC)),4) AS success_sb_perc
+-- FROM batting
+-- WHERE yearID = 2016
+-- GROUP BY playerID
+-- 	HAVING (SUM(sb)+SUM(cs)) > 19
+-- ORDER BY success_sb_perc DESC;
+
+WITH sbpercs AS (
+SELECT playerID, SUM(sb) AS total_stolen, SUM(cs) AS total_caught, (SUM(sb)+SUM(cs)) AS total_attempts,
+	ROUND(((SUM(sb)::NUMERIC)/((SUM(sb)+SUM(cs))::NUMERIC)),4) AS success_sb_perc
 FROM batting
 WHERE yearID = 2016
 GROUP BY playerID
 	HAVING (SUM(sb)+SUM(cs)) > 19
-ORDER BY stolen_attempts DESC;
+ORDER BY success_sb_perc DESC)
+SELECT p.namefirst, p.namelast, total_stolen, total_caught, total_attempts, success_sb_perc
+FROM sbpercs
+LEFT JOIN people AS p
+USING (playerID)
+ORDER BY success_sb_perc DESC;
 
+-- ANSWER: Chris Owings had 91.3% success rate.
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
 

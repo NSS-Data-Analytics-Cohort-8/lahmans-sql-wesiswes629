@@ -126,27 +126,17 @@ ORDER BY success_sb_perc DESC;
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
 
-SELECT yearID, teamID, name, SUM(w) AS total_wins
+SELECT yearid, MAX(w) AS most_wins
 FROM teams
-WHERE yearID > 1969
-GROUP BY yearID, teamID, name
-ORDER BY yearID, teamID;
+WHERE yearid > 1969
+GROUP BY yearid
+ORDER BY yearid;
 
-SELECT yearID, teamID, name, WSWin
+SELECT yearid, MIN(w) AS least_wins
 FROM teams
-WHERE yearID > 1969
-ORDER BY yearID, teamID;
-
-WITH wincalc AS (
-SELECT yearID, teamID, name, SUM(w) AS total_wins
-FROM teams
-WHERE yearID > 1969
-GROUP BY yearID, teamID, name
-ORDER BY yearID, teamID)
-SELECT yearID, teamID, name, WSWin, total_wins
-FROM teams
-INNER JOIN wincalc
-USING (yearID, teamID, name);
+WHERE yearid > 1969
+GROUP BY yearid
+ORDER BY yearid;
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
 

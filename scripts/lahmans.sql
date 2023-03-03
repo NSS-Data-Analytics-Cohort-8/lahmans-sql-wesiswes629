@@ -87,13 +87,31 @@ GROUP BY yearID),
 SELECT yearID, ((SUM(g)/2) :: NUMERIC) AS games_year
 FROM teams AS t
 GROUP BY yearID)
-SELECT g.yearID, ROUND((so_year/games_year),2) AS so_per_game,
-		(hr_year/games_year) AS hr_per_game
+SELECT g.yearID, ROUND(AVG(so_year/games_year),2) AS so_per_game,
+		ROUND(AVG(hr_year/games_year),2) AS hr_per_game
 FROM games AS g
 INNER JOIN batting AS b
 USING (yearID)
 WHERE yearID > 1920
+GROUP BY yearID
 ORDER BY yearID DESC;
+
+WITH batting AS (
+SELECT (yearID/10 * 10) AS decade, (SUM(so) :: NUMERIC) AS so_year, (SUM(hr) :: NUMERIC) AS hr_year
+FROM batting AS b
+GROUP BY yearID),
+	games AS (
+SELECT (yearID/10 * 10) AS decade, ((SUM(g)/2) :: NUMERIC) AS games_year
+FROM teams AS t
+GROUP BY yearID)
+SELECT decade, ROUND(AVG(so_year/games_year),2) AS so_per_game,
+		ROUND(AVG(hr_year/games_year),2) AS hr_per_game
+FROM games AS g
+INNER JOIN batting AS b
+USING (decade)
+WHERE decade >= 1920
+GROUP BY decade
+ORDER BY decade DESC;
 
 
 

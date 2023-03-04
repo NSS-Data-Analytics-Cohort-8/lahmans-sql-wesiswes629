@@ -126,21 +126,30 @@ ORDER BY success_sb_perc DESC;
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
 
-SELECT yearid, MAX(w) AS most_wins
+SELECT yearid, teamid, w
+FROM teams
+WHERE yearid > 1969 AND wswin ='N'
+ORDER BY w DESC
+LIMIT 1;
+
+SELECT yearid, teamid, w
+FROM teams
+WHERE yearid > 1969 AND wswin ='Y'
+ORDER BY w
+LIMIT 1;
+
+
+WITH mostwins AS (SELECT yearid, MAX(w) AS most_wins
 FROM teams
 WHERE yearid > 1969
 GROUP BY yearid
-ORDER BY yearid;
+ORDER BY yearid)
 
-SELECT yearid, MIN(w) AS least_wins
+SELECT yearid, name, most_wins, wswin
 FROM teams
-WHERE yearid > 1969
-GROUP BY yearid
-ORDER BY yearid;
-
-SELECT yearid, name
-FROM teams
-WHERE yearid > 1969 AND WSWin = 'Y'
+LEFT JOIN mostwins
+USING (yearid)
+WHERE yearid > 1969 AND wswin = 'N'
 ORDER BY yearid;
 
 

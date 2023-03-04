@@ -52,7 +52,7 @@ CASE WHEN pos = 'OF' THEN 'Outfield'
 	WHEN pos = '3B' THEN 'Infield'
 	WHEN pos = 'SS' THEN 'Infield'
 	ELSE 'Battery' END AS position,
-	COUNT(po) AS total_putout
+	SUM(po) AS total_putout
 FROM fielding
 GROUP BY position;
 
@@ -60,9 +60,11 @@ SELECT
 CASE WHEN pos = 'OF' THEN 'Outfield'
 	WHEN pos = '2B' OR pos = '1B' OR pos = '3B' OR pos = 'SS' THEN 'Infield'
 	ELSE 'Battery' END AS position,
-	COUNT(po) AS total_putout
+	SUM(po) AS total_putout
 FROM fielding
+WHERE yearid = 2016
 GROUP BY position;
+
 
 -- Answer: "Battery" 56195 "Infield" 52186 "Outfield" 28434
    
@@ -85,6 +87,11 @@ WHERE decade >= 1920
 GROUP BY decade
 ORDER BY decade DESC;
 
+SELECT (yearID/10 * 10) AS decade, ROUND(AVG(so),2) AS avg_so, ROUND(AVG(hr),2) AS avg_hr
+FROM batting	
+WHERE yearid >=1920
+GROUP BY decade
+ORDER BY decade;																		
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 
@@ -141,7 +148,8 @@ LIMIT 1;
 
 SELECT yearid, name, w
 FROM teams
-WHERE yearid BETWEEN 1970 AND 1980 
+WHERE yearid BETWEEN 1970 AND 2016 
+AND yearid <> 1981
 AND wswin = 'Y'
 ORDER BY w
 LIMIT 1;
@@ -160,10 +168,59 @@ SELECT t.yearid, t.name, mostwins, t.wswin
 FROM teams AS t
 LEFT JOIN maxwins AS m
 ON t.yearid = m.yearid AND t.w = m.mostwins
-WHERE t.yearid > 1969 AND m.mostwins IS NOT NULL
+WHERE t.yearid > 1969 
+AND m.mostwins IS NOT NULL
+AND wswin IS NOT NULL
 ORDER BY t.yearid;
 
--- Answer: Most wins but no World Series is the 2001 Seatle Mariners. First it's 1981 LA Dodgers with 63, but after omitting 1981, the least Wins but still won World Series is the 1974 Oakland A's with 90.  
+WITH maxwins AS (
+	SELECT yearid, MAX(w) AS mostwins
+	FROM teams
+	GROUP BY yearid)
+	
+	
+SELECT t.yearid, t.name, mostwins, t.wswin,
+CASE WHEN wswin = 'Y' THEN 1 ELSE 0 END
+FROM teams AS t
+LEFT JOIN maxwins AS m
+ON t.yearid = m.yearid AND t.w = m.mostwins
+WHERE t.yearid > 1969 
+AND m.mostwins IS NOT NULL
+AND wswin IS NOT NULL
+ORDER BY t.yearid;
+
+
+WITH maxwins AS (
+	SELECT yearid, MAX(w) AS mostwins
+	FROM teams
+	GROUP BY yearid)
+		
+SELECT t.yearid, t.name, mostwins, t.wswin,
+	(SUM(CASE WHEN wswin = 'Y' THEN 1 ELSE 0 END) OVER ()/46::numeric)
+FROM teams AS t
+LEFT JOIN maxwins AS m
+ON t.yearid = m.yearid AND t.w = m.mostwins
+WHERE t.yearid > 1969 
+AND m.mostwins IS NOT NULL
+AND wswin IS NOT NULL
+ORDER BY t.yearid;
+
+WITH maxwins AS (
+	SELECT yearid, MAX(w) AS mostwins
+	FROM teams
+	GROUP BY yearid)
+		
+SELECT t.yearid, t.name, mostwins, t.wswin,
+	SUM(CASE WHEN wswin = 'Y' THEN 1 ELSE 0 END) OVER ()/ COUNT(t.yearid) OVER()::NUMERIC
+FROM teams AS t
+LEFT JOIN maxwins AS m
+ON t.yearid = m.yearid AND t.w = m.mostwins
+WHERE t.yearid > 1969 
+AND m.mostwins IS NOT NULL
+AND wswin IS NOT NULL
+ORDER BY t.yearid;
+
+-- Answer: Most wins but no World Series is the 2001 Seatle Mariners. First it's 1981 LA Dodgers with 63, but after omitting 1981, the least Wins but still won World Series is the 2006 St Louis Cardnials. There is a 23% chance to win for the most wins.
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
 

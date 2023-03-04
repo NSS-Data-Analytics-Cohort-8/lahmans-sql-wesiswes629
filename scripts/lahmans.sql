@@ -134,7 +134,15 @@ LIMIT 1;
 
 SELECT yearid, teamid, w
 FROM teams
-WHERE yearid > 1969 AND wswin ='Y'
+WHERE yearid > 1969
+AND wswin = 'Y'
+ORDER BY w
+LIMIT 1;
+
+SELECT yearid, teamid, w
+FROM teams
+WHERE yearid BETWEEN 1970 AND 1980 
+AND wswin = 'Y'
 ORDER BY w
 LIMIT 1;
 
@@ -153,7 +161,7 @@ WHERE yearid > 1969 AND wswin = 'N'
 ORDER BY yearid;
 
 
-
+-- Answer: Most wins but no World Series is the 2001 Seatle Mariners. First it's 1981 LAN with 63, but after omitting 1981, the least Wins but still won World Series is the 1974 Oakland with 90.  
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
 

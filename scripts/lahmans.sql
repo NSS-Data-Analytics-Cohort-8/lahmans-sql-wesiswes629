@@ -207,10 +207,12 @@ ORDER BY t.yearid;
 -- USING (park)
 -- WHERE year = 2016;
 
--- SELECT p.park_name, h.team, (h.attendance/h.games) AS avg_attendance
+-- SELECT p.park_name, h.team, t.name, (h.attendance/h.games) AS avg_attendance
 -- FROM homegames AS h
 -- LEFT JOIN parks AS p
 -- USING (park)
+-- LEFT JOIN teams AS t
+-- ON h.team = t.teamid
 -- WHERE year = 2016
 -- AND h.games > 10
 -- ORDER BY avg_attendance DESC
@@ -286,8 +288,107 @@ LIMIT 5;
 
 -- 9. Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? Give their full name and the teams that they were managing when they won the award.
 
+SELECT *
+FROM awardsmanagers
+WHERE awardid = 'TSN Manager of the Year';
 
+SELECT playerid, yearid
+FROM awardsmanagers
+WHERE awardid = 'TSN Manager of the Year'
+AND lgid = 'NL';
 
+SELECT playerid, yearid
+FROM awardsmanagers
+WHERE awardid = 'TSN Manager of the Year'
+AND lgid = 'AL';
+
+WITH tsnaward AS (SELECT playerid, yearid, lgid
+FROM awardsmanagers
+WHERE awardid = 'TSN Manager of the Year'
+AND lgid = 'AL'
+UNION 
+SELECT playerid, yearid, lgid
+FROM awardsmanagers
+WHERE awardid = 'TSN Manager of the Year'
+AND lgid = 'NL')
+
+SELECT p.namefirst, p.namelast, tsnaward.yearid, m.teamid, m.lgid
+FROM tsnaward 
+INNER JOIN people AS p
+USING (playerid)
+LEFT JOIN managers AS m
+USING (playerid, yearid)
+ORDER BY p.namelast;
+
+WITH tsnaward AS (SELECT playerid
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+	AND lgid = 'AL'
+INTERSECT 
+	SELECT playerid
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+	AND lgid = 'NL')
+
+SELECT tsnaward.playerid, p.namefirst, p.namelast, m.yearid, m.teamid, m.lgid
+FROM tsnaward 
+INNER JOIN people AS p
+USING (playerid)
+LEFT JOIN managers AS m
+USING (playerid)
+ORDER BY p.namelast;
+
+SELECT p.namefirst, p.namelast, m.yearid, m.lgid
+FROM people AS p
+INNER JOIN managers AS m
+USING (playerid)
+WHERE playerid IN (SELECT playerid 
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+	AND lgid = 'AL'
+INTERSECT 
+	SELECT playerid 
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+	AND lgid = 'NL');
+	
+
+SELECT p.namefirst, p.namelast, m.yearid, m.lgid, m.teamid
+FROM (SELECT playerid 
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+	AND lgid = 'AL'
+INTERSECT 
+	SELECT playerid 
+	FROM awardsmanagers
+	WHERE awardid = 'TSN Manager of the Year'
+	AND lgid = 'NL') AS awards
+	INNER JOIN people AS p
+	USING (playerid)
+INNER JOIN managers AS m
+USING (playerid)
+
+SELECT DISTINCT a.yearid, a.playerid, p.namefirst, p.namelast, t.name, a.lgid
+FROM people AS p
+LEFT JOIN awardsmanagers AS a
+USING (playerid)
+LEFT JOIN managers AS m
+ON m.yearid = a.yearid
+AND m.playerid = a.playerid
+LEFT JOIN teams AS t
+ON m.teamid = t.teamid
+AND m.yearid = t.yearid
+WHERE a.playerid IN 
+		(SELECT playerid
+		FROM awardsmanagers
+		WHERE awardid = 'TSN Manager of the Year'
+		AND lgid =  'AL'
+		INTERSECT
+		SELECT playerid
+		FROM awardsmanagers
+		WHERE awardid = 'TSN Manager of the Year'
+		AND lgid = 'NL')
+		
 -- 10. Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016.
 
 

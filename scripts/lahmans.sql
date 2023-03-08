@@ -419,6 +419,48 @@ ORDER BY maxhr.max DESC;
 
 -- 11. Is there any correlation between number of wins and team salary? Use data from 2000 and later to answer this question. As you do this analysis, keep in mind that salaries across the whole league tend to increase together, so you may want to look on a year-by-year basis.
 
+SELECT yearid, teamid, SUM(salary)
+FROM salaries
+WHERE yearid >= 2000
+GROUP BY teamid, yearid
+ORDER BY yearid;
+
+SELECT yearid, teamid, w
+FROM teams
+WHERE yearid >= 2000
+ORDER BY yearid;
+
+SELECT s.yearid, s.teamid, SUM(salary) as total_salary, t.w AS wins
+FROM salaries as s
+LEFT JOIN teams as t
+USING (teamid, yearid)
+WHERE s. yearid >= 2000
+GROUP BY s.teamid, s.yearid, t.w
+ORDER BY s.teamid, s.yearid;
+
+SELECT s.yearid, s.teamid, ((SUM(salary)::NUMERIC)::MONEY) as total_salary, t.w AS wins, 
+	ROUND(AVG(SUM(salary)::NUMERIC) OVER (PARTITION BY s.teamid),2)::MONEY AS avg_team_salary,
+	ROUND(AVG(t.w) OVER (PARTITION BY s.teamid),2) AS avg_team_wins
+FROM salaries as s
+LEFT JOIN teams as t
+USING (teamid, yearid)
+WHERE s. yearid >= 2000
+GROUP BY s.teamid, s.yearid, t.w
+ORDER BY s.teamid, s.yearid;
+
+SELECT s.teamid, s.yearid, ((SUM(salary)::NUMERIC)::MONEY) AS teamsalary, t.w, 
+	ROUND(AVG(SUM(salary)::NUMERIC) OVER (PARTITION BY s.teamid),2)::MONEY AS avg_team_salary,
+	ROUND(AVG(t.w) OVER (PARTITION BY s.teamid),2) AS avg_team_wins,
+	((SUM(salary)::NUMERIC)::MONEY)-(ROUND(AVG(SUM(salary)::NUMERIC) OVER (PARTITION BY s.teamid),2)::MONEY) AS salary_diff,
+	t.w - (ROUND(AVG(t.w) OVER (PARTITION BY s.teamid),2)) AS win_diff
+FROM salaries AS s
+FULL JOIN teams AS t
+ON s.yearid = t.yearid
+AND s.teamid = t.teamid
+WHERE s.yearid >= 2000
+GROUP BY s.teamid, s.yearid, t.w
+ORDER BY teamid, yearid;
+
 -- 12. In this question, you will explore the connection between number of wins and attendance.
 --     <ol type="a">
 --       <li>Does there appear to be any correlation between attendance at home games and number of wins? </li>

@@ -47,17 +47,6 @@ ORDER BY total_salary DESC;
 
 SELECT 
 CASE WHEN pos = 'OF' THEN 'Outfield'
-	WHEN pos = '2B' THEN 'Infield'
-	WHEN pos = '1B' THEN 'Infield'
-	WHEN pos = '3B' THEN 'Infield'
-	WHEN pos = 'SS' THEN 'Infield'
-	ELSE 'Battery' END AS position,
-	SUM(po) AS total_putout
-FROM fielding
-GROUP BY position;
-
-SELECT 
-CASE WHEN pos = 'OF' THEN 'Outfield'
 	WHEN pos = '2B' OR pos = '1B' OR pos = '3B' OR pos = 'SS' THEN 'Infield'
 	ELSE 'Battery' END AS position,
 	SUM(po) AS total_putout
@@ -66,7 +55,7 @@ WHERE yearid = 2016
 GROUP BY position;
 
 
--- Answer: "Battery" 56195 "Infield" 52186 "Outfield" 28434
+-- Answer: "Battery" 41424 "Infield" 58934 "Outfield" 29560
    
 -- 5. Find the average number of strikeouts per game by decade since 1920. Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?
 
@@ -189,29 +178,13 @@ AND m.mostwins IS NOT NULL
 AND wswin IS NOT NULL
 ORDER BY t.yearid;
 
-
 WITH maxwins AS (
 	SELECT yearid, MAX(w) AS mostwins
 	FROM teams
 	GROUP BY yearid)
 		
 SELECT t.yearid, t.name, mostwins, t.wswin,
-	(SUM(CASE WHEN wswin = 'Y' THEN 1 ELSE 0 END) OVER ()/46::numeric)
-FROM teams AS t
-LEFT JOIN maxwins AS m
-ON t.yearid = m.yearid AND t.w = m.mostwins
-WHERE t.yearid > 1969 
-AND m.mostwins IS NOT NULL
-AND wswin IS NOT NULL
-ORDER BY t.yearid;
-
-WITH maxwins AS (
-	SELECT yearid, MAX(w) AS mostwins
-	FROM teams
-	GROUP BY yearid)
-		
-SELECT t.yearid, t.name, mostwins, t.wswin,
-	SUM(CASE WHEN wswin = 'Y' THEN 1 ELSE 0 END) OVER ()/ COUNT(t.yearid) OVER()::NUMERIC
+	ROUND((SUM(CASE WHEN wswin = 'Y' THEN 1 ELSE 0 END) OVER ()/ COUNT(t.yearid) OVER()::NUMERIC),5)*100 AS perc_wsw_win
 FROM teams AS t
 LEFT JOIN maxwins AS m
 ON t.yearid = m.yearid AND t.w = m.mostwins
@@ -224,8 +197,96 @@ ORDER BY t.yearid;
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
 
+-- SELECT team, park
+-- FROM homegames
+-- WHERE year = 2016;
+
+-- SELECT h.team, p.park_name
+-- FROM homegames AS h
+-- LEFT JOIN parks AS p
+-- USING (park)
+-- WHERE year = 2016;
+
+-- SELECT p.park_name, h.team, (h.attendance/h.games) AS avg_attendance
+-- FROM homegames AS h
+-- LEFT JOIN parks AS p
+-- USING (park)
+-- WHERE year = 2016
+-- AND h.games > 10
+-- ORDER BY avg_attendance DESC
+-- LIMIT 5;
+
+-- SELECT p.park_name, (h.attendance/h.games) AS avg_attendance
+-- FROM homegames AS h
+-- LEFT JOIN parks AS p
+-- USING (park)
+-- WHERE year = 2016
+-- AND h.games > 10
+-- ORDER BY avg_attendance DESC
+-- LIMIT 5;
+
+-- SELECT p.park_name, (h.attendance/h.games) AS avg_attendance
+-- FROM homegames AS h
+-- LEFT JOIN parks AS p
+-- ON h.park = p.park
+-- WHERE year = 2016
+-- AND h.games > 10
+-- ORDER BY avg_attendance DESC
+-- LIMIT 5;
+
+-- SELECT p.park_name, p.park, (h.attendance/h.games) AS avg_attendance
+-- FROM homegames AS h
+-- LEFT JOIN parks AS p
+-- ON h.park = p.park
+-- WHERE year = 2016
+-- AND h.games > 10
+-- ORDER BY avg_attendance DESC
+-- LIMIT 5;
+
+WITH hometeam AS (SELECT h.team, t.name AS teamname, h.park
+FROM homegames AS h
+LEFT JOIN teams AS t
+ON h.year = t.yearid and h.team = t.teamid
+WHERE h.year = 2016),
+	ballpark AS (SELECT p.park_name, p.park, (h.attendance/h.games) AS avg_attendance
+FROM homegames AS h
+LEFT JOIN parks AS p
+ON h.park = p.park
+WHERE year = 2016
+AND h.games > 10)
+
+SELECT teamname, ballpark.park_name, avg_attendance
+FROM hometeam
+INNER JOIN ballpark
+ON hometeam.park = ballpark.park
+ORDER BY avg_attendance DESC
+LIMIT 5;
+
+WITH hometeam AS (SELECT h.team, t.name AS teamname, h.park
+FROM homegames AS h
+LEFT JOIN teams AS t
+ON h.year = t.yearid and h.team = t.teamid
+WHERE h.year = 2016),
+	ballpark AS (SELECT p.park_name, p.park, (h.attendance/h.games) AS avg_attendance
+FROM homegames AS h
+LEFT JOIN parks AS p
+ON h.park = p.park
+WHERE year = 2016
+AND h.games > 10)
+
+SELECT teamname, ballpark.park_name, avg_attendance
+FROM hometeam
+INNER JOIN ballpark
+ON hometeam.park = ballpark.park
+ORDER BY avg_attendance 
+LIMIT 5;
+
+-- Answer: Top 5 "Los Angeles Dodgers"	"Dodger Stadium"	45719 "St. Louis Cardinals"	"Busch Stadium III"	42524 "Toronto Blue Jays"	"Rogers Centre"	41877 "San Francisco Giants"	"AT&T Park"	41546 "Chicago Cubs"	"Wrigley Field"	39906
+-- Answer: Lowest 5 "Tampa Bay Rays"	"Tropicana Field"	15878 "Oakland Athletics"	"Oakland-Alameda County Coliseum"	18784 "Cleveland Indians"	"Progressive Field"	19650 "Miami Marlins"	"Marlins Park"	21405 "Chicago White Sox"	"U.S. Cellular Field"	21559
 
 -- 9. Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? Give their full name and the teams that they were managing when they won the award.
+
+
 
 -- 10. Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016.
 

@@ -387,10 +387,33 @@ WHERE a.playerid IN
 		SELECT playerid
 		FROM awardsmanagers
 		WHERE awardid = 'TSN Manager of the Year'
-		AND lgid = 'NL')
+		AND lgid = 'NL');
+		
+-- Jim Leyland and Davey Johnson both won the award in both leagues.
 		
 -- 10. Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016.
 
+
+	SELECT playerid, yearid, MAX(hr)
+	FROM batting
+	GROUP BY playerid, yearid
+	HAVING MAX(hr) > 0
+	ORDER BY yearid DESC
+	
+	with maxhr AS (
+SELECT playerid, yearid, MAX(hr) AS max
+FROM batting
+GROUP BY playerid, yearid
+HAVING MAX(hr) > 0
+ORDER BY yearid)
+
+SELECT namefirst, namelast, yearid, maxhr.max
+FROM people
+JOIN maxhr
+USING (playerid)
+WHERE yearid = 2016
+AND people.debut :: date < '2006-01-01'
+ORDER BY maxhr.max DESC;
 
 -- **Open-ended questions**
 
